@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
-public class Prim {
+public class Prim { //naive and forward implementation
 
 	class Edge implements Comparable<Edge>{
 		Integer v1;
@@ -87,7 +87,7 @@ public class Prim {
 			Edge edge = null;
 			df.removeAll(p.X);
 			//choose the cheapest edge e (X,V)
-			for (Edge e: p.E){
+			for (Edge e: p.E){ //Brute-force. It would be better using heaps
 				if (e.cutedge(p.X,df)){
 					if (e.cost < min){
 						min = e.cost;
@@ -111,5 +111,5 @@ public class Prim {
 		System.out.println(cost);
 	}
 
-
+	//0(nm) It could be better implemented O(mlogn)
 }
