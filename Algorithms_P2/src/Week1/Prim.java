@@ -29,7 +29,7 @@ public class Prim { //naive and forward implementation
 			Edge eo = (Edge)o;
 			return (this.cost > eo.cost)?1:-1;
 		}
-		public boolean cutedge(Set X, Set DV){
+		public boolean cutedge(Set<Integer> X, Set<Integer> DV){
 			if ((X.contains(v1) && DV.contains(v2)) || (X.contains(v2) && DV.contains(v1)))
 				return true; 
 			else return false;
@@ -42,45 +42,45 @@ public class Prim { //naive and forward implementation
 	Set<Integer> X;// Set of Vertices X
 	List<Edge> T = new ArrayList<Edge>(); //T is the MST (minimum spanning tree)
 
-	public Prim() {
-		leer();
+	public Prim(String filepath) throws FileNotFoundException {
+		leer(filepath);
 	}
 
-	private void leer(){
-		 try {
-		        Scanner sc = new Scanner(new File(Paths.get("D:\\Cursos Coursera\\Coursera - Algoritmos II\\Ejercicios\\edges.txt").toString()));
-		        Integer nnodos = sc.nextInt();
-		        Integer nedges = sc.nextInt();
-		        V = new HashSet<Integer>(nnodos);
-		        X = new HashSet<Integer>(nnodos);
-		        E = new ArrayList<Edge>(nedges);
-		        
-		        while (sc.hasNextInt()) {
-		            int v1 = sc.nextInt();
-		            int v2 = sc.nextInt();
-		            long cost = sc.nextLong();
-		            
-		            V.add(v1);
-		            V.add(v2);
-		            Edge e= new Edge(v1,v2,cost);
-		            E.add(e);
-		            
-		            System.out.println(e);
-		        }
-		        sc.close();
-		        Collections.sort(E);
-		        System.out.println(E.size());
-		    } 
-		    catch (FileNotFoundException e) {
-		        e.printStackTrace();
-		    }
+	private void leer(String path) throws FileNotFoundException{
+		Scanner sc = new Scanner(new File(Paths.get(path).toString()));
+		try {
+			Integer nnodos = sc.nextInt();
+			Integer nedges = sc.nextInt();
+			V = new HashSet<Integer>(nnodos);
+			X = new HashSet<Integer>(nnodos);
+			E = new ArrayList<Edge>(nedges);
+
+			while (sc.hasNextInt()) {
+				int v1 = sc.nextInt();
+				int v2 = sc.nextInt();
+				long cost = sc.nextLong();
+
+				V.add(v1);
+				V.add(v2);
+				Edge e= new Edge(v1,v2,cost);
+				E.add(e);
+
+				System.out.println(e);
+			}
+
+			Collections.sort(E);
+			System.out.println(E.size());
+		} 
+		finally{
+			sc.close();
+		}
 	}
 	
-	public static void main(String[] args) {
-		Prim p = new Prim(); p.leer();
+	public static void main(String[] args) throws FileNotFoundException {
+		Prim p = new Prim("D:\\Cursos Coursera\\Coursera - Algoritmos II\\Ejercicios\\edges.txt"); 
 		
 		p.X.add(p.E.get(0).v1); //Initialize X with first Vertice with the minimun cost on one of its edges.(E is ordering by cost)
-		Set df = new HashSet(p.V); //Vertices not used
+		Set<Integer> df = new HashSet<Integer>(p.V); //Vertices not used
 		
 		while (p.X.size() != p.V.size()){ //While don't pass for all Vertices (V)
 			Long min = Long.MAX_VALUE;

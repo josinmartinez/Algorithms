@@ -43,8 +43,8 @@ public class Jobs {
 
 	public List<Task> tasks;
 	
-	public Jobs() {
-		leer();
+	public Jobs(String filepath) throws FileNotFoundException {
+		leer(filepath);
 	}
 	
 	private void calcular() {
@@ -63,26 +63,23 @@ public class Jobs {
 		}
 	}
 
-	private void leer(){
-		 try {
-		        Scanner sc = new Scanner(new File(Paths.get("D:\\Cursos Coursera\\Coursera - Algoritmos II\\Ejercicios\\jobs.txt").toString()));
-		        tasks = new ArrayList<Task>(sc.nextInt());
-		        
-		        while (sc.hasNextInt()) {
-		        	int w = sc.nextInt();
-		            int l = sc.nextInt();
-		            Task t = new Task(w,l);
-		            tasks.add(t);
-		        }
-		        sc.close();
-		    } 
-		    catch (FileNotFoundException e) {
-		        e.printStackTrace();
-		    }
+	private void leer(String path) throws FileNotFoundException {
+		Scanner sc = new Scanner(new File(Paths.get(path).toString()));
+		try{	    
+			tasks = new ArrayList<Task>(sc.nextInt());
+			while (sc.hasNextInt()) {
+				int w = sc.nextInt();
+				int l = sc.nextInt();
+				Task t = new Task(w,l);
+				tasks.add(t);
+			}
+		}finally{
+			sc.close();
+		}
 	}
 
-	public static void main(String[] args){
-		Jobs j = new Jobs();
+	public static void main(String[] args) throws FileNotFoundException{
+		Jobs j = new Jobs("D:\\Cursos Coursera\\Coursera - Algoritmos II\\Ejercicios\\jobs.txt");
 		
 		Collections.sort(j.tasks);
 		j.show();
