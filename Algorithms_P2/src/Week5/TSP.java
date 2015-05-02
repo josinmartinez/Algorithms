@@ -15,55 +15,84 @@ public class TSP {
 	private List<Vertex> cities; private byte ncities; private byte initCity;
 	private float[][]A;
 	private float[][]distances;
-
-	private Map<Set<Byte>,Integer> indexInArray = new HashMap<Set<Byte>,Integer>();
-	private List<List<Set<Byte>>> listMCombinaciones;
+	private Map<Integer,Integer> mapa;
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		TSP tsp = new TSP();
 		tsp.leer("D:\\data\\tsp.txt");
 		tsp.calcule();
-		//tsp.prueba(5);
+	}
+
+	private int nextValue(int a) {
+		  /* works for any word length */
+		  int c = (a & -a);
+		  int r = a+c;
+		  return (((r ^ a) >> 2) / c) | r; 
+	}
+	
+	private int[] generateSubset(int m){
+		int nbits = (int)Math.pow(2, m)-1 ;
+		int val = nbits;
+		int capacity = (m==1)?ncities:(int)factorial(ncities-1).divide(factorial(m-1).multiply(factorial(ncities-1-m+1))).longValue();
+		int []temp = new int[capacity];
+		int index = 0;
+		temp[index++] = val;
+		mapa.put(val, mapa.size());
+		val = nextValue(val);
+		while (val < (int)Math.pow(2, ncities)){
+			if (val % 2 !=0 || nbits == 1){
+				temp[index++] = val;
+				mapa.put(val, mapa.size());
+			}
+			val = nextValue(val);
+		}
+		return temp;
 	}
 	
 	private void calcule() {
+		System.out.print("Inicializar.....");
 		initializeA1andCombinaciones();
+		System.out.println("[Done]");
 		for (byte m = 2; m <= ncities; m++){
-			for (Set<Byte> s: setsOfSize(m)){
-				for (Byte j: s){
+			int contador = 0;
+			System.out.print(m);
+			for (int s: generateSubset(m)){
+				contador++;
+				byte[] cities = generateCities(s,m); 
+				for (Byte j: cities){
 					if (j == initCity) continue;
-					A[calculeIndex(s)][j] = minValue(s,j);
+					A[mapa.get(s)][j] = minValue(s,j,cities);
 				}
 			}
+			System.out.println(" "+contador);
 		}
 		System.out.println("SOL:"+solucion());
+	}
+
+	private byte[] generateCities(int s, int m) {
+		byte [] temp = new byte[m];
+		byte index=0;
+		for (byte i=0;i<ncities;i++){
+			if (((s>>i)&1) == 1)
+				temp[index++] = i;
+		}
+		return temp;
 	}
 
 	private void initializeA1andCombinaciones() {
 		initializeDistances();
 		initializeA();
-		initializeSubsets();
-	}
-
-	private void initializeSubsets() {
-		for (byte i=0;i<ncities;i++){
-			Set<Byte> s = new HashSet<Byte>(1); s.add(i);
-			indexInArray.put(s, (int)i);
-		}
-		listMCombinaciones = new ArrayList<List<Set<Byte>>>(2); //only need the last one to calculate a new combination
-		Set<Byte> s = new HashSet<Byte>(1); s.add(initCity);
-		List<Set<Byte>> list = new ArrayList<Set<Byte>>(1); list.add(s);
-		listMCombinaciones.add(list);
-		listMCombinaciones.add(null);
 	}
 
 	private void initializeA() {
 		int subsets = (int)Math.pow(2, ncities-1)+(ncities-1);
-		A = new float[subsets][ncities]; //A = new ArrayList<List<Double>>();
+		mapa = new HashMap<Integer,Integer>(subsets);
+		A = new float[subsets][ncities]; 
 		for (int i=0; i<subsets; i++){
 			if (i==initCity) A[i][initCity] = 0;
 			else A[i][initCity] = Float.MAX_VALUE;
-		}	
+		}
+		generateSubset(1);
 	}
 
 	private void initializeDistances() {
@@ -75,29 +104,6 @@ public class TSP {
 			}
 	}
 
-	private List<Set<Byte>> setsOfSize(byte m) {
-		int temp =0; long capacity = factorial(ncities-1).divide(factorial(m-1).multiply(factorial(ncities-1-m+1))).longValue();
-		if (capacity > Integer.MAX_VALUE) capacity=Integer.MAX_VALUE;
-		int newindex = 0, oldindex =0;
-		if (m%2 == 0) {newindex=1;oldindex=0;} else {newindex=0;oldindex=1;}
-		listMCombinaciones.set(newindex,new ArrayList<Set<Byte>>((int)capacity));
-		for (Set<Byte> set: listMCombinaciones.get(oldindex)){
-			byte start = max(set);
-			//if (start==ncities-1) break;
-			for (byte i=start;i<ncities;i++){
-				temp++;
-				Set<Byte> s1 = new HashSet<Byte>(set);
-				s1.add(i);
-				if (s1.size() == m)	{
-					listMCombinaciones.get(newindex).add(s1);
-					indexInArray.put(s1, indexInArray.size());
-				}
-			}
-		}
-		System.out.println(m+" = "+listMCombinaciones.get(newindex).size()+"!"+temp);
-		return listMCombinaciones.get(newindex);
-	}
-
 	private BigInteger factorial(int n) {
 		BigInteger value = new BigInteger("1");
 		for (int i=n;i>0;i--)
@@ -105,36 +111,27 @@ public class TSP {
 		return value;
 	}
 
-	private byte max(Set<Byte> set) {
-		byte max = Byte.MIN_VALUE;
-		for (Byte b: set){
-			if (b > max) max = b;
-		}
-		return ++max;
-	}
-
-	private float minValue(Set<Byte> s, Byte j) {
+	private float minValue(int s, Byte j, byte[] cities) {
 		float minValue = Float.MAX_VALUE;
-		Set<Byte> s1 = new HashSet<Byte>(s);
-		s1.remove(j);
-		for (byte k: s){
+		int op = 1 << j;
+		s = s ^ op;
+
+		for (byte k: cities){
 			if ((k==j)) continue;//||(k==initial)
 			else {
-				float value = A[calculeIndex(s1)][k] + distances[k][j];
+				float value = A[mapa.get(s)][k] + distances[k][j];
 				if (minValue > value) minValue = value;
 			}
 		}
 		return minValue;
 	}
 
+
 	private double solucion() {
-		Set<Byte> allCities =  new HashSet<Byte>();
-		for (byte i=0;i<ncities;i++){
-			allCities.add(i);
-		}
+		int allCities = (int)Math.pow(2, ncities)-1;
 		double minValue = Double.MAX_VALUE;
 		for (byte j=1;j<ncities;j++){
-			double value = A[calculeIndex(allCities)][j] + distances[j][0];
+			double value = A[mapa.get(allCities)][j] + distances[j][0];
 			if (minValue > value) minValue = value;
 		}
 		return minValue;
@@ -155,9 +152,5 @@ public class TSP {
 		}finally{
 			scan.close();
 		}
-	}
-		
-	private int calculeIndex(Set<Byte> S){
-		return indexInArray.get(S);
 	}
 }
